@@ -2,6 +2,30 @@
 
 Simple to use library that takes care of all your bitcoin conversions. Convert to and from bitcoin, satoshis and fiat.
 
+<!--ts-->
+
+- [Bitcoin Conversion](#bitcoin-conversion)
+  - [Installation](#installation)
+  - [Usage](#usage)
+    - [Bitcoin to Fiat](#bitcoin-to-fiat)
+      - [API](#api)
+      - [Example](#example)
+    - [Bitcoin to Satoshis](#bitcoin-to-satoshis)
+      - [API](#api-1)
+      - [Example](#example-1)
+    - [Satoshis to Bitcoin](#satoshis-to-bitcoin)
+      - [API](#api-2)
+      - [Example](#example-2)
+    - [Satoshis to Fiat](#satoshis-to-fiat)
+      - [API](#api-3)
+      - [Example](#example-3)
+    - [Fiat to X](#fiat-to-x)
+  - [Acknowledgements](#acknowledgements)
+
+<!-- Added by: aryanjabbari, at: Sat Dec 12 13:12:35 EST 2020 -->
+
+<!--te-->
+
 ## Installation
 
 ```bash
@@ -182,30 +206,78 @@ type SupportedCurrencies =
   | 'ZWL'; // Zimbabwean Dollar"
 ```
 
-### Bitcoin to X
-
-```typescript
-import { bitcoinTo } from 'bitcoin-conversion';
-```
+### Bitcoin to Fiat
 
 #### API
 
 ```typescript
-bitcointo(amountInBtc: number | string, convertTo: SupportedCurrencies | 'satoshis')
+async bitcoinToFiat(amountInBtc: number | string, convertTo: SupportedCurrencies);
 ```
 
 #### Example
 
 ```typescript
-import { bitcoinTo } from 'bitcoin-conversion';
+import { bitcoinToFiat } from 'bitcoin-conversion';
 
-const paymentInUsd = await bitcoinTo('0.00005', 'satoshis');
-const paymentInUsd = await bitcoinTo('0.00005', 'USD'); // needs await since calling CoinDesk API
+const paymentInUsd = await bitcoinToFiat('0.00005', 'USD'); // needs await since calling CoinDesk API
+const paymentInGbp = await bitcoinToFiat(0.1, 'GBP'); // needs await since calling CoinDesk API
 ```
 
-### Satoshis to X
+### Bitcoin to Satoshis
 
-### Fiat to
+#### API
+
+```typescript
+bitcoinToSatoshis(amountInBtc: number | string);
+```
+
+#### Example
+
+```typescript
+import { bitcoinToSatoshis } from 'bitcoin-conversion';
+
+// number or string allowed
+const paymentInSats = await bitcoinToFiat('0.00005');
+const paymentInSats = await bitcoinToFiat(0.5);
+```
+
+### Satoshis to Bitcoin
+
+#### API
+
+```typescript
+async satoshisToBitcoin(amountInSatoshis: number | string);
+```
+
+#### Example
+
+```typescript
+import { satoshisToBitcoin } from 'bitcoin-conversion';
+
+// number or string allowed
+const paymentInBtc = await satoshisToBitcoin('100000000');
+const paymentInBtc = await satoshisToBitcoin(50000);
+```
+
+### Satoshis to Fiat
+
+#### API
+
+```typescript
+satoshisToFiat(amountInSatoshis: number | string, convertTo: SupportedCurrencies);
+```
+
+#### Example
+
+```typescript
+import { satoshisToFiat } from 'bitcoin-conversion';
+
+// number or string allowed
+const paymentInUsd = await satoshisToFiat('100000000', 'USD');
+const paymentInGbp = await satoshisToFiat(50000, 'GBP');
+```
+
+### Fiat to X
 
 ## Acknowledgements
 

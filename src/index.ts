@@ -1,23 +1,41 @@
-import { evaluate, multiply } from 'mathjs';
+import { divide, evaluate, multiply } from 'mathjs';
 import fetch from 'unfetch';
 
 const numSatsInBtc = 100000000;
 
-export const bitcoinTo = async (
+export const bitcoinToFiat = async (
   amountInBtc: number | string,
-  convertTo: SupportedCurrencies | 'satoshis'
+  convertTo: SupportedCurrencies
 ) => {
-  let btc =
-    typeof amountInBtc === 'string' ? evaluate(amountInBtc) : amountInBtc;
-  if (convertTo === 'satoshis') {
-    return multiply(btc, numSatsInBtc);
-  } else {
-    const rate = await getFiatBtcRate(convertTo);
-    return multiply(evaluate(rate), btc);
-  }
+  const btc = _evaluate(amountInBtc);
+  const rate = await getFiatBtcRate(convertTo);
+  return multiply(evaluate(rate), btc);
 };
 
-export const getFiatBtcRate = async (currency: SupportedCurrencies) => {
+export const bitcoinToSatoshis = (amountInBtc: number | string) => {
+  const btc = _evaluate(amountInBtc);
+  return multiply(btc, numSatsInBtc);
+};
+
+export const satoshisToBitcoin = (amountInSatoshis: number | string) => {
+  const sats = _evaluate(amountInSatoshis);
+  return divide(sats, numSatsInBtc);
+};
+
+export const satoshisToFiat = async (
+  amountInSats: number,
+  convertTo: SupportedCurrencies
+) => {
+  const btc = satoshisToBitcoin(amountInSats);
+  const fiat = await bitcoinToFiat(btc, convertTo);
+  return fiat;
+};
+
+const _evaluate = (expr: number | string) => {
+  return typeof expr === 'string' ? evaluate(expr) : expr;
+};
+
+const getFiatBtcRate = async (currency: SupportedCurrencies) => {
   const response = await fetch(
     'https://api.coindesk.com/v1/bpi/currentprice/usd.json'
   );
