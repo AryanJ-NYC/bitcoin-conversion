@@ -1,4 +1,4 @@
-name: CI
+name: TOC
 on:
   push:
     branches: [master]
