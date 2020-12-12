@@ -1,3 +1,4 @@
+import currencyJs from 'currency.js';
 import { divide, evaluate, multiply } from 'mathjs';
 import fetch from 'unfetch';
 
@@ -9,7 +10,8 @@ export const bitcoinToFiat = async (
 ) => {
   const btc = _evaluate(amountInBtc);
   const rate = await getFiatBtcRate(convertTo);
-  return multiply(evaluate(rate), btc);
+  const evaluatedRate = _evaluate(rate);
+  return multiply(evaluatedRate, btc);
 };
 
 export const bitcoinToSatoshis = (amountInBtc: number | string) => {
@@ -31,20 +33,35 @@ export const satoshisToFiat = async (
   return fiat;
 };
 
+export const fiatToBitcoin = async (
+  amountInCurrency: number | string,
+  convertFrom: SupportedCurrencies
+) => {
+  const amt = _evaluate(amountInCurrency);
+  const rate = await getFiatBtcRate(convertFrom);
+  const evaluatedRate = _evaluate(rate);
+  return divide(amt, evaluatedRate);
+};
+
 const _evaluate = (expr: number | string) => {
   return typeof expr === 'string' ? evaluate(expr) : expr;
 };
 
-const getFiatBtcRate = async (currency: SupportedCurrencies) => {
+const getFiatBtcRate = async (
+  currency: SupportedCurrencies
+): Promise<string> => {
   const response = await fetch(
-    'https://api.coindesk.com/v1/bpi/currentprice/usd.json'
+    `https://api.coindesk.com/v1/bpi/currentprice/${currency.toLowerCase()}.json`
   );
   if (response.status !== 200) {
     const json = await response.json();
     throw Error(json);
   }
   const data = await response.json();
-  return data.bpi[currency].rate;
+  return currencyJs(data.bpi[currency].rate, {
+    separator: '',
+    symbol: '',
+  }).format();
 };
 
 export type SupportedCurrencies =

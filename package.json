@@ -45,6 +45,7 @@
     }
   ],
   "dependencies": {
+    "currency.js": "^2.0.3",
     "jest-fetch-mock": "^3.0.3",
     "mathjs": "^8.1.0",
     "unfetch": "^4.2.0"
