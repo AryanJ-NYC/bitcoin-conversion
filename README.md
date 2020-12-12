@@ -75,8 +75,8 @@ bitcoinToSatoshis(amountInBtc: number | string): number;
 import { bitcoinToSatoshis } from 'bitcoin-conversion';
 
 // number or string allowed
-const paymentInSats = await bitcoinToFiat('0.00005');
-const paymentInSats = await bitcoinToFiat(0.5);
+const paymentInSats = bitcoinToSatoshis('0.00005');
+const paymentInSats = bitcoinToSatoshis(0.5);
 ```
 
 ### Satoshis to Bitcoin
@@ -93,8 +93,8 @@ satoshisToBitcoin(amountInSatoshis: number | string): number;
 import { satoshisToBitcoin } from 'bitcoin-conversion';
 
 // number or string allowed
-const paymentInBtc = await satoshisToBitcoin('100000000');
-const paymentInBtc = await satoshisToBitcoin(50000);
+const paymentInBtc = satoshisToBitcoin('100000000');
+const paymentInBtc = satoshisToBitcoin(50000);
 ```
 
 ### Satoshis to Fiat
@@ -111,8 +111,8 @@ satoshisToFiat(amountInSatoshis: number | string, convertTo: SupportedCurrencies
 import { satoshisToFiat } from 'bitcoin-conversion';
 
 // number or string allowed
-const paymentInUsd = await satoshisToFiat('100000000', 'USD');
-const paymentInGbp = await satoshisToFiat(50000, 'GBP');
+const paymentInUsd = await satoshisToFiat('100000000', 'USD'); // needs await since calling CoinDesk API
+const paymentInGbp = await satoshisToFiat(50000, 'GBP'); // needs await since calling CoinDesk API
 ```
 
 ### Fiat to Bitcoin
@@ -129,8 +129,8 @@ fiatToBitcoin(amountInCurrency: number | string, convertFrom: SupportedCurrencie
 import { fiatToBitcoin } from 'bitcoin-conversion';
 
 // number or string allowed
-const paymentInBtcFromUsd = await fiatToBitcoin('100000000', 'USD');
-const paymentInBtcFromGbp = await fiatToBitcoin(50000, 'GBP');
+const paymentInBtcFromUsd = await fiatToBitcoin('100000000', 'USD'); // needs await since calling CoinDesk API
+const paymentInBtcFromGbp = await fiatToBitcoin(50000, 'GBP'); // needs await since calling CoinDesk API
 ```
 
 ### Fiat to Satoshis
@@ -147,8 +147,8 @@ fiatToSatoshis(amountInCurrency: number | string, convertFrom: SupportedCurrenci
 import { fiatToSatoshis } from 'bitcoin-conversion';
 
 // number or string allowed
-const paymentInSatsFromUsd = await fiatToSatoshis('100000000', 'USD');
-const paymentInSatsFromGbp = await fiatToSatoshis(50000, 'GBP');
+const paymentInSatsFromUsd = await fiatToSatoshis('100000000', 'USD'); // needs await since calling CoinDesk API
+const paymentInSatsFromGbp = await fiatToSatoshis(50000, 'GBP'); // needs await since calling CoinDesk API
 ```
 
 ## Supported Currencies
