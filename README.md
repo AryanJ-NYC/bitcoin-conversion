@@ -29,7 +29,7 @@ Simple to use library that takes care of all your bitcoin conversions. Convert t
       * [Supported Currencies](#supported-currencies)
       * [Acknowledgements](#acknowledgements)
 
-<!-- Added by: runner, at: Sat Dec 12 19:47:58 UTC 2020 -->
+<!-- Added by: runner, at: Sat Dec 12 19:51:07 UTC 2020 -->
 
 <!--te-->
 
