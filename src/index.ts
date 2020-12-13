@@ -1,6 +1,6 @@
 import currencyJs from 'currency.js';
-import { divide, evaluate, multiply } from 'mathjs';
-import fetch from 'unfetch';
+import { divide, multiply } from 'mathjs';
+import 'unfetch/polyfill';
 
 const numSatsInBtc = 100000000;
 
@@ -8,19 +8,19 @@ export const bitcoinToFiat = async (
   amountInBtc: number | string,
   convertTo: SupportedCurrencies
 ) => {
-  const btc = _evaluate(amountInBtc);
+  const btc = evaluate(amountInBtc);
   const rate = await getFiatBtcRate(convertTo);
-  const evaluatedRate = _evaluate(rate);
+  const evaluatedRate = evaluate(rate);
   return multiply(evaluatedRate, btc);
 };
 
 export const bitcoinToSatoshis = (amountInBtc: number | string) => {
-  const btc = _evaluate(amountInBtc);
+  const btc = evaluate(amountInBtc);
   return multiply(btc, numSatsInBtc);
 };
 
 export const satoshisToBitcoin = (amountInSatoshis: number | string) => {
-  const sats = _evaluate(amountInSatoshis);
+  const sats = evaluate(amountInSatoshis);
   return divide(sats, numSatsInBtc);
 };
 
@@ -37,14 +37,14 @@ export const fiatToBitcoin = async (
   amountInCurrency: number | string,
   convertFrom: SupportedCurrencies
 ) => {
-  const amt = _evaluate(amountInCurrency);
+  const amt = evaluate(amountInCurrency);
   const rate = await getFiatBtcRate(convertFrom);
-  const evaluatedRate = _evaluate(rate);
+  const evaluatedRate = evaluate(rate);
   return divide(amt, evaluatedRate);
 };
 
-const _evaluate = (expr: number | string) => {
-  return typeof expr === 'string' ? evaluate(expr) : expr;
+const evaluate = (expr: number | string) => {
+  return typeof expr === 'string' ? parseFloat(expr) : expr;
 };
 
 const getFiatBtcRate = async (
