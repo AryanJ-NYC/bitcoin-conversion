@@ -1,6 +1,6 @@
 import currencyJs from 'currency.js';
 import { divide, multiply } from 'mathjs';
-import 'unfetch/polyfill';
+import fetch from 'unfetch';
 
 const numSatsInBtc = 100000000;
 

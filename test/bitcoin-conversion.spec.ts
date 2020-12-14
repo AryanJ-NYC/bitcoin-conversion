@@ -1,4 +1,3 @@
-import fetchMock from 'fetch-mock-jest';
 import {
   bitcoinToFiat,
   bitcoinToSatoshis,
@@ -10,12 +9,8 @@ import {
 
 describe('bitcoin-conversion', () => {
   beforeAll(() => {
-    fetchMock.get('https://api.coindesk.com/v1/bpi/currentprice/usd.json', {
-      bpi: { USD: { rate: '17000' } },
-    });
+    jest.resetAllMocks();
   });
-
-  afterAll(() => fetchMock.reset());
 
   test('converts bitcoin to fiat', async () => {
     expect(await bitcoinToFiat(1, 'USD')).toBe(17000);
