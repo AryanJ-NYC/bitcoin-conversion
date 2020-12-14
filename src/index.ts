@@ -43,6 +43,14 @@ export const fiatToBitcoin = async (
   return divide(amt, evaluatedRate);
 };
 
+export const fiatToSatoshis = async (
+  amountInCurrency: number | string,
+  convertFrom: SupportedCurrencies
+) => {
+  const amountInBtc = await fiatToBitcoin(amountInCurrency, convertFrom);
+  return bitcoinToSatoshis(amountInBtc);
+};
+
 const evaluate = (expr: number | string) => {
   return typeof expr === 'string' ? parseFloat(expr) : expr;
 };
