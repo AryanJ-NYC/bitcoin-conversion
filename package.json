@@ -60,6 +60,7 @@
     "@types/mathjs": "^6.0.8",
     "fetch-mock-jest": "^1.5.1",
     "husky": "^4.3.5",
+    "node-fetch": "^2.6.1",
     "size-limit": "^4.9.1",
     "tsdx": "^0.14.1",
     "tslib": "^2.0.3",
