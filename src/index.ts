@@ -25,7 +25,7 @@ export const satoshisToBitcoin = (amountInSatoshis: number | string) => {
 };
 
 export const satoshisToFiat = async (
-  amountInSats: number,
+  amountInSats: number | string,
   convertTo: SupportedCurrencies
 ) => {
   const btc = satoshisToBitcoin(amountInSats);
