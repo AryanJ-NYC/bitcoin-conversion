@@ -52,8 +52,8 @@
   ],
   "dependencies": {
     "currency.js": "^2.0.3",
-    "mathjs": "^8.1.0",
-    "unfetch": "^4.2.0"
+    "isomorphic-unfetch": "^3.1.0",
+    "mathjs": "^8.1.0"
   },
   "devDependencies": {
     "@size-limit/preset-small-lib": "^4.9.1",

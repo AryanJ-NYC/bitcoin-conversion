@@ -1,8 +1,8 @@
 import currencyJs from 'currency.js';
 import { divide, multiply } from 'mathjs';
-import fetch from 'unfetch';
+import fetch from 'isomorphic-unfetch';
 
-const numSatsInBtc = 100000000;
+const numSatsInBtc = 100_000_000;
 
 export const bitcoinToFiat = async (
   amountInBtc: number | string,
