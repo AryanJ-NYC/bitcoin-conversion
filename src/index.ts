@@ -1,5 +1,5 @@
 import currencyJs from 'currency.js';
-import { divide, multiply } from 'mathjs';
+import { Decimal } from 'decimal.js-light';
 import fetch from 'isomorphic-unfetch';
 
 const numSatsInBtc = 100_000_000;
@@ -8,20 +8,19 @@ export const bitcoinToFiat = async (
   amountInBtc: number | string,
   convertTo: SupportedCurrencies
 ) => {
-  const btc = evaluate(amountInBtc);
+  const btc = new Decimal(amountInBtc);
   const rate = await getFiatBtcRate(convertTo);
-  const evaluatedRate = evaluate(rate);
-  return multiply(evaluatedRate, btc);
+  return btc.mul(rate).toNumber();
 };
 
 export const bitcoinToSatoshis = (amountInBtc: number | string) => {
-  const btc = evaluate(amountInBtc);
-  return multiply(btc, numSatsInBtc);
+  const btc = new Decimal(amountInBtc);
+  return btc.mul(numSatsInBtc).toNumber();
 };
 
 export const satoshisToBitcoin = (amountInSatoshis: number | string) => {
-  const sats = evaluate(amountInSatoshis);
-  return divide(sats, numSatsInBtc);
+  const sats = new Decimal(amountInSatoshis);
+  return sats.div(numSatsInBtc).toNumber();
 };
 
 export const satoshisToFiat = async (
@@ -37,10 +36,10 @@ export const fiatToBitcoin = async (
   amountInCurrency: number | string,
   convertFrom: SupportedCurrencies
 ) => {
-  const amt = evaluate(amountInCurrency);
+  const amt = new Decimal(amountInCurrency);
   const rate = await getFiatBtcRate(convertFrom);
-  const evaluatedRate = evaluate(rate);
-  return divide(amt, evaluatedRate);
+  const evaluatedRate = new Decimal(rate);
+  return amt.div(evaluatedRate).toNumber();
 };
 
 export const fiatToSatoshis = async (
@@ -49,10 +48,6 @@ export const fiatToSatoshis = async (
 ) => {
   const amountInBtc = await fiatToBitcoin(amountInCurrency, convertFrom);
   return bitcoinToSatoshis(amountInBtc);
-};
-
-const evaluate = (expr: number | string) => {
-  return typeof expr === 'string' ? parseFloat(expr) : expr;
 };
 
 const getFiatBtcRate = async (

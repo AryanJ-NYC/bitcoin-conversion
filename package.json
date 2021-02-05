@@ -52,12 +52,11 @@
   ],
   "dependencies": {
     "currency.js": "^2.0.3",
-    "isomorphic-unfetch": "^3.1.0",
-    "mathjs": "^8.1.0"
+    "decimal.js-light": "^2.5.1",
+    "isomorphic-unfetch": "^3.1.0"
   },
   "devDependencies": {
     "@size-limit/preset-small-lib": "^4.9.1",
-    "@types/mathjs": "^6.0.8",
     "husky": "^4.3.5",
     "size-limit": "^4.9.1",
     "tsdx": "^0.14.1",
