@@ -54,8 +54,7 @@ const getFiatBtcRate = async (
   currency: SupportedCurrencies
 ): Promise<string> => {
   const response = await fetch(
-    `https://api.coindesk.com/v1/bpi/currentprice/${currency.toLowerCase()}.json`,
-    { cache: 'force-cache' }
+    `https://api.coindesk.com/v1/bpi/currentprice/${currency.toLowerCase()}.json`
   );
   if (response.status !== 200) {
     const json = await response.json();
