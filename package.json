@@ -57,6 +57,7 @@
   },
   "devDependencies": {
     "@size-limit/preset-small-lib": "^4.9.1",
+    "cz-conventional-changelog": "3.3.0",
     "husky": "^4.3.5",
     "size-limit": "^4.9.1",
     "tsdx": "^0.14.1",
@@ -71,5 +72,10 @@
     "sats",
     "fiat",
     "currency"
-  ]
+  ],
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  }
 }

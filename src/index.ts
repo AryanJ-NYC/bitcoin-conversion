@@ -50,7 +50,7 @@ export const fiatToSatoshis = async (
   return bitcoinToSatoshis(amountInBtc);
 };
 
-const getFiatBtcRate = async (
+export const getFiatBtcRate = async (
   currency: SupportedCurrencies
 ): Promise<string> => {
   const response = await fetch(
