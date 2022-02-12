@@ -21,6 +21,7 @@
     "start": "tsdx watch",
     "build": "tsdx build",
     "test": "tsdx test",
+    "test:watch": "tsdx test --watch",
     "lint": "tsdx lint",
     "prepare": "tsdx build",
     "size": "size-limit",
@@ -51,7 +52,7 @@
     }
   ],
   "dependencies": {
-    "currency.js": "^2.0.3",
+    "currency.js": "^2.0.4",
     "decimal.js-light": "^2.5.1",
     "isomorphic-unfetch": "^3.1.0"
   },

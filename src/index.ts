@@ -13,9 +13,33 @@ export const bitcoinToFiat = async (
   return btc.mul(rate).toNumber();
 };
 
+export const bitcoinToPepecash = async (amountInBtc: number | string) => {
+  const btc = new Decimal(amountInBtc);
+  const pepecashToBtcRate = await getPepecashBtcRate();
+  return btc.div(pepecashToBtcRate).toNumber();
+};
+
 export const bitcoinToSatoshis = (amountInBtc: number | string) => {
   const btc = new Decimal(amountInBtc);
   return btc.mul(numSatsInBtc).toNumber();
+};
+
+export const bitcoinToXcp = async (amountInBtc: number | string) => {
+  const btc = new Decimal(amountInBtc);
+  const xcpToBtcRate = await getXcpBtcRate();
+  return btc.div(xcpToBtcRate).toNumber();
+};
+
+export const pepecashToBitcoin = async (amountInPepecash: number | string) => {
+  const pepecash = new Decimal(amountInPepecash);
+  const pepecashToBtcRate = await getPepecashBtcRate();
+  return pepecash.mul(pepecashToBtcRate).toNumber();
+};
+
+export const xcpToBitcoin = async (amountInXcp: number | string) => {
+  const xcp = new Decimal(amountInXcp);
+  const xcpToBtcRate = await getXcpBtcRate();
+  return xcp.mul(xcpToBtcRate).toNumber();
 };
 
 export const satoshisToBitcoin = (amountInSatoshis: number | string) => {
@@ -48,6 +72,32 @@ export const fiatToSatoshis = async (
 ) => {
   const amountInBtc = await fiatToBitcoin(amountInCurrency, convertFrom);
   return bitcoinToSatoshis(amountInBtc);
+};
+
+/**
+ * returns the current value of one PEPECASH in BTC
+ */
+export const getPepecashBtcRate = async () => {
+  const response = await fetch('https://xchain.io/api/asset/PEPECASH');
+  if (response.status !== 200) {
+    const json = await response.json();
+    throw Error(json);
+  }
+  const data = await response.json();
+  return data.estimated_value.btc;
+};
+
+/**
+ * returns the current value of one XCP in BTC
+ */
+export const getXcpBtcRate = async (): Promise<string> => {
+  const response = await fetch('https://xchain.io/api/asset/XCP');
+  if (response.status !== 200) {
+    const json = await response.json();
+    throw Error(json);
+  }
+  const data = await response.json();
+  return data.estimated_value.btc;
 };
 
 export const getFiatBtcRate = async (
