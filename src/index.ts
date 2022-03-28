@@ -30,6 +30,15 @@ export const bitcoinToXcp = async (amountInBtc: number | string) => {
   return btc.div(xcpToBtcRate).toNumber();
 };
 
+export const crytpoToBitcoin = async (
+  amountInCrypto: number | string,
+  cryptoCode: SupportedCypto
+) => {
+  const amount = new Decimal(amountInCrypto);
+  const btcRate = await getCrypoBtcRate(cryptoCode);
+  return amount.times(btcRate).toNumber();
+};
+
 export const pepecashToBitcoin = async (amountInPepecash: number | string) => {
   const pepecash = new Decimal(amountInPepecash);
   const pepecashToBtcRate = await getPepecashBtcRate();
@@ -74,6 +83,18 @@ export const fiatToSatoshis = async (
   return bitcoinToSatoshis(amountInBtc);
 };
 
+export const getCrypoBtcRate = async (cryptoCode: SupportedCypto) => {
+  const response = await fetch(
+    `https://min-api.cryptocompare.com/data/price?fsym=${cryptoCode}&tsyms=BTC`
+  );
+  if (response.status !== 200) {
+    const json = await response.json();
+    throw Error(json);
+  }
+  const data = await response.json();
+  return data.BTC;
+};
+
 /**
  * returns the current value of one PEPECASH in BTC
  */
@@ -116,6 +137,8 @@ export const getFiatBtcRate = async (
     symbol: '',
   }).format();
 };
+
+export type SupportedCypto = 'ETH';
 
 export type SupportedCurrencies =
   | 'AED' // United Arab Emirates Dirham"
