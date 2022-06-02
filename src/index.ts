@@ -30,7 +30,7 @@ export const bitcoinToXcp = async (amountInBtc: number | string) => {
   return btc.div(xcpToBtcRate).toNumber();
 };
 
-export const crytpoToBitcoin = async (
+export const cryptoToBitcoin = async (
   amountInCrypto: number | string,
   cryptoCode: SupportedCypto
 ) => {
