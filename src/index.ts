@@ -126,15 +126,13 @@ interface RateCache {
   timestamp: number;
 }
 
-const rateCache: Record<
+const rateCache: Record<SupportedCurrencies, RateCache | undefined> = {} as Record<
   SupportedCurrencies,
   RateCache | undefined
-> = {} as Record<SupportedCurrencies, RateCache | undefined>;
+>;
 const CACHE_TTL_MS = 60000; // 1 minute cache
 
-export const getFiatBtcRate = async (
-  currency: SupportedCurrencies
-): Promise<string> => {
+export const getFiatBtcRate = async (currency: SupportedCurrencies): Promise<string> => {
   const now = Date.now();
   const cachedData = rateCache[currency];
 
@@ -143,8 +141,6 @@ export const getFiatBtcRate = async (
     return cachedData.rate;
   }
 
-  console.log('fetching fiat btc rate');
-  console.log(fetch);
   const response = await fetch(
     `https://api.coindesk.com/v1/bpi/currentprice/${currency.toLowerCase()}.json`
   );
