@@ -121,9 +121,29 @@ export const getXcpBtcRate = async (): Promise<string> => {
   return data.estimated_value.btc;
 };
 
+// Cache interface and implementation
+interface RateCache {
+  rate: string;
+  timestamp: number;
+}
+
+const rateCache: Record<
+  SupportedCurrencies,
+  RateCache | undefined
+> = {} as Record<SupportedCurrencies, RateCache | undefined>;
+const CACHE_TTL_MS = 60000; // 1 minute cache
+
 export const getFiatBtcRate = async (
   currency: SupportedCurrencies
 ): Promise<string> => {
+  const now = Date.now();
+  const cachedData = rateCache[currency];
+
+  // Return cached data if it exists and hasn't expired
+  if (cachedData && now - cachedData.timestamp < CACHE_TTL_MS) {
+    return cachedData.rate;
+  }
+
   const response = await fetch(
     `https://api.coindesk.com/v1/bpi/currentprice/${currency.toLowerCase()}.json`
   );
@@ -132,10 +152,15 @@ export const getFiatBtcRate = async (
     throw Error(json);
   }
   const data = await response.json();
-  return currencyJs(data.bpi[currency].rate, {
+  const rate = currencyJs(data.bpi[currency].rate, {
     separator: '',
     symbol: '',
   }).format();
+
+  // Cache the new rate
+  rateCache[currency] = { rate, timestamp: now };
+
+  return rate;
 };
 
 export type SupportedCypto = 'ETH';

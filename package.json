@@ -27,13 +27,8 @@
     "size": "size-limit",
     "analyze": "size-limit --why"
   },
-  "husky": {
-    "hooks": {
-      "pre-commit": "tsdx lint"
-    }
-  },
   "prettier": {
-    "printWidth": 80,
+    "printWidth": 100,
     "semi": true,
     "singleQuote": true,
     "trailingComma": "es5"
