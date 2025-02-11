@@ -1,6 +1,5 @@
 import currencyJs from 'currency.js';
 import { Decimal } from 'decimal.js-light';
-import fetch from 'isomorphic-unfetch';
 
 const numSatsInBtc = 100_000_000;
 
@@ -144,6 +143,8 @@ export const getFiatBtcRate = async (
     return cachedData.rate;
   }
 
+  console.log('fetching fiat btc rate');
+  console.log(fetch);
   const response = await fetch(
     `https://api.coindesk.com/v1/bpi/currentprice/${currency.toLowerCase()}.json`
   );

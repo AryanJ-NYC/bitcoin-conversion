@@ -11,8 +11,41 @@ import {
   xcpToBitcoin,
 } from '../src';
 
+// Mock fetch globally
+global.fetch = jest.fn((url: string) => {
+  return Promise.resolve({
+    status: 200,
+    json: () => {
+      if (url === 'https://api.coindesk.com/v1/bpi/currentprice/usd.json') {
+        return Promise.resolve({ bpi: { USD: { rate: '17000' } } });
+      }
+      if (url === 'https://xchain.io/api/asset/PEPECASH') {
+        return Promise.resolve({
+          asset: 'PEPECASH',
+          estimated_value: {
+            btc: '0.00000045',
+            usd: '0.02',
+            xcp: '0.00197600',
+          },
+        });
+      }
+      if (url === 'https://xchain.io/api/asset/XCP') {
+        return Promise.resolve({
+          asset: 'XCP',
+          estimated_value: {
+            btc: '0.00022868',
+            usd: '9.61',
+            xcp: '1.00000000',
+          },
+        });
+      }
+      return Promise.resolve('');
+    },
+  });
+}) as jest.Mock;
+
 describe('bitcoin-conversion', () => {
-  beforeAll(() => jest.resetAllMocks());
+  beforeAll(() => jest.clearAllMocks());
 
   test('converts bitcoin to fiat', async () => {
     expect(await bitcoinToFiat(1, 'USD')).toBe(17000);
