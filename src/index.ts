@@ -35,7 +35,7 @@ export const cryptoToBitcoin = async (
   cryptoCode: SupportedCypto
 ) => {
   const amount = new Decimal(amountInCrypto);
-  const btcRate = await getCrypoBtcRate(cryptoCode);
+  const btcRate = await getCryptoBtcRate(cryptoCode);
   return amount.times(btcRate).toNumber();
 };
 
@@ -83,7 +83,7 @@ export const fiatToSatoshis = async (
   return bitcoinToSatoshis(amountInBtc);
 };
 
-export const getCrypoBtcRate = async (cryptoCode: SupportedCypto) => {
+export const getCryptoBtcRate = async (cryptoCode: SupportedCypto) => {
   const response = await fetch(
     `https://min-api.cryptocompare.com/data/price?fsym=${cryptoCode}&tsyms=BTC`
   );
