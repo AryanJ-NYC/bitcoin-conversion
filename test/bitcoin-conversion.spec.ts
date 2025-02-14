@@ -19,24 +19,19 @@ global.fetch = jest.fn((url: string) => {
       if (url === 'https://api.coindesk.com/v1/bpi/currentprice/usd.json') {
         return Promise.resolve({ bpi: { USD: { rate: '17000' } } });
       }
+      if (url === 'https://api.coinbase.com/v2/prices/BTC-USD/spot') {
+        return Promise.resolve({ data: { amount: '17000', base: 'BTC', currency: 'USD' } });
+      }
       if (url === 'https://xchain.io/api/asset/PEPECASH') {
         return Promise.resolve({
           asset: 'PEPECASH',
-          estimated_value: {
-            btc: '0.00000045',
-            usd: '0.02',
-            xcp: '0.00197600',
-          },
+          estimated_value: { btc: '0.00000045', usd: '0.02', xcp: '0.00197600' },
         });
       }
       if (url === 'https://xchain.io/api/asset/XCP') {
         return Promise.resolve({
           asset: 'XCP',
-          estimated_value: {
-            btc: '0.00022868',
-            usd: '9.61',
-            xcp: '1.00000000',
-          },
+          estimated_value: { btc: '0.00022868', usd: '9.61', xcp: '1.00000000' },
         });
       }
       return Promise.resolve('');
@@ -45,7 +40,29 @@ global.fetch = jest.fn((url: string) => {
 }) as jest.Mock;
 
 describe('bitcoin-conversion', () => {
-  beforeAll(() => jest.clearAllMocks());
+  beforeEach(() => jest.clearAllMocks());
+
+  test('uses Coinbase API as primary source', async () => {
+    const result = await bitcoinToFiat(1, 'USD');
+    expect(result).toBe(17_000);
+    expect(fetch).toHaveBeenCalledWith('https://api.coinbase.com/v2/prices/BTC-USD/spot');
+    expect(fetch).not.toHaveBeenCalledWith('https://api.coindesk.com/v1/bpi/currentprice/usd.json');
+  });
+
+  test('falls back to Coindesk API when Coinbase fails', async () => {
+    // Mock Coinbase failure first
+    (fetch as jest.Mock).mockImplementationOnce(() =>
+      Promise.resolve({
+        status: 500,
+        json: () => Promise.resolve({ error: 'Service unavailable' }),
+      })
+    );
+
+    const result = await bitcoinToFiat(1, 'USD');
+    expect(result).toBe(17000);
+    expect(fetch).toHaveBeenCalledWith('https://api.coinbase.com/v2/prices/BTC-USD/spot');
+    expect(fetch).toHaveBeenCalledWith('https://api.coindesk.com/v1/bpi/currentprice/usd.json');
+  });
 
   test('converts bitcoin to fiat', async () => {
     expect(await bitcoinToFiat(1, 'USD')).toBe(17000);
@@ -109,18 +126,14 @@ describe('bitcoin-conversion', () => {
   test('converts PEPECASH to bitcoin', async () => {
     expect(await pepecashToBitcoin(0)).toBe(0);
     expect(await pepecashToBitcoin(1)).toBeCloseTo(0.00000045);
-    expect(await pepecashToBitcoin(100_000_000)).toBeCloseTo(
-      0.00000045 * 100_000_000
-    );
+    expect(await pepecashToBitcoin(100_000_000)).toBeCloseTo(0.00000045 * 100_000_000);
     expect(await pepecashToBitcoin(54234)).toBeCloseTo(0.00000045 * 54234);
   });
 
   test('converts XCP to bitcoin', async () => {
     expect(await xcpToBitcoin(0)).toBe(0);
     expect(await xcpToBitcoin(1)).toBeCloseTo(0.00022868);
-    expect(await xcpToBitcoin(100_000_000)).toBeCloseTo(
-      0.00022868 * 100_000_000
-    );
+    expect(await xcpToBitcoin(100_000_000)).toBeCloseTo(0.00022868 * 100_000_000);
     expect(await xcpToBitcoin(54234)).toBeCloseTo(0.00022868 * 54234);
   });
 });

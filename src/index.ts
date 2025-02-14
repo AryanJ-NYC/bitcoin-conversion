@@ -130,7 +130,7 @@ const rateCache: Record<SupportedCurrencies, RateCache | undefined> = {} as Reco
   SupportedCurrencies,
   RateCache | undefined
 >;
-const CACHE_TTL_MS = 60000; // 1 minute cache
+const CACHE_TTL_MS = process.env.NODE_ENV === 'test' ? 0 : 60000; // 1 minute cache
 
 export const getFiatBtcRate = async (currency: SupportedCurrencies): Promise<string> => {
   const now = Date.now();
@@ -141,23 +141,39 @@ export const getFiatBtcRate = async (currency: SupportedCurrencies): Promise<str
     return cachedData.rate;
   }
 
-  const response = await fetch(
-    `https://api.coindesk.com/v1/bpi/currentprice/${currency.toLowerCase()}.json`
-  );
-  if (response.status !== 200) {
+  // Try Coinbase API first
+  try {
+    const response = await fetch(`https://api.coinbase.com/v2/prices/BTC-${currency}/spot`);
+    if (response.status === 200) {
+      const data = await response.json();
+      const rate = currencyJs(data.data.amount, { separator: '', symbol: '' }).format();
+
+      // Cache the new rate
+      rateCache[currency] = { rate, timestamp: now };
+      return rate;
+    }
+  } catch (error) {
+    console.warn('Coinbase API failed, falling back to Coindesk:', error);
+  }
+
+  // Fallback to Coindesk API
+  try {
+    const response = await fetch(
+      `https://api.coindesk.com/v1/bpi/currentprice/${currency.toLowerCase()}.json`
+    );
+    if (response.status === 200) {
+      const data = await response.json();
+      const rate = currencyJs(data.bpi[currency].rate, { separator: '', symbol: '' }).format();
+
+      // Cache the new rate
+      rateCache[currency] = { rate, timestamp: now };
+      return rate;
+    }
     const json = await response.json();
     throw Error(json);
+  } catch (error) {
+    throw new Error(`Both Coinbase and Coindesk APIs failed: ${error}`);
   }
-  const data = await response.json();
-  const rate = currencyJs(data.bpi[currency].rate, {
-    separator: '',
-    symbol: '',
-  }).format();
-
-  // Cache the new rate
-  rateCache[currency] = { rate, timestamp: now };
-
-  return rate;
 };
 
 export type SupportedCypto = 'ETH';
