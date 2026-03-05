@@ -5,31 +5,32 @@
 Simple to use library that takes care of all your bitcoin conversions. Convert to and from bitcoin, satoshis and fiat.
 
 <!--ts-->
-   * [Bitcoin Conversion](#bitcoin-conversion)
-      * [Installation](#installation)
-      * [Usage](#usage)
-         * [Bitcoin to Fiat](#bitcoin-to-fiat)
-            * [API](#api)
-            * [Example](#example)
-         * [Bitcoin to Satoshis](#bitcoin-to-satoshis)
-            * [API](#api-1)
-            * [Example](#example-1)
-         * [Satoshis to Bitcoin](#satoshis-to-bitcoin)
-            * [API](#api-2)
-            * [Example](#example-2)
-         * [Satoshis to Fiat](#satoshis-to-fiat)
-            * [API](#api-3)
-            * [Example](#example-3)
-         * [Fiat to Bitcoin](#fiat-to-bitcoin)
-            * [API](#api-4)
-            * [Example](#example-4)
-         * [Fiat to Satoshis](#fiat-to-satoshis)
-            * [API](#api-5)
-            * [Example](#example-5)
-      * [Supported Currencies](#supported-currencies)
-      * [Acknowledgements](#acknowledgements)
+* [Bitcoin Conversion](#bitcoin-conversion)
+   * [Installation](#installation)
+   * [Usage](#usage)
+      * [Bitcoin to Fiat](#bitcoin-to-fiat)
+         * [API](#api)
+         * [Example](#example)
+      * [Bitcoin to Satoshis](#bitcoin-to-satoshis)
+         * [API](#api-1)
+         * [Example](#example-1)
+      * [Satoshis to Bitcoin](#satoshis-to-bitcoin)
+         * [API](#api-2)
+         * [Example](#example-2)
+      * [Satoshis to Fiat](#satoshis-to-fiat)
+         * [API](#api-3)
+         * [Example](#example-3)
+      * [Fiat to Bitcoin](#fiat-to-bitcoin)
+         * [API](#api-4)
+         * [Example](#example-4)
+      * [Fiat to Satoshis](#fiat-to-satoshis)
+         * [API](#api-5)
+         * [Example](#example-5)
+   * [Supported Currencies](#supported-currencies)
+   * [Acknowledgements](#acknowledgements)
 
-<!-- Added by: runner, at: Sat Dec 12 19:51:07 UTC 2020 -->
+<!-- Created by https://github.com/ekalinin/github-markdown-toc -->
+<!-- Added by: runner, at: Thu Mar  5 04:55:08 UTC 2026 -->
 
 <!--te-->
 
