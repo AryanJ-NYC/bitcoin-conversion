@@ -1,5 +1,5 @@
 {
-  "version": "0.7.0",
+  "version": "0.8.0",
   "license": "MIT",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
@@ -46,10 +46,6 @@
       "limit": "10 KB"
     }
   ],
-  "dependencies": {
-    "currency.js": "^2.0.4",
-    "decimal.js-light": "^2.5.1"
-  },
   "devDependencies": {
     "@size-limit/preset-small-lib": "^4.9.1",
     "cz-conventional-changelog": "3.3.0",

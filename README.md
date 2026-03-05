@@ -42,7 +42,13 @@ npm install bitcoin-conversion
 
 ## Usage
 
-Note that all functions converting to or from fiat return a `Promise`. This is because it calls the CoinDesk API for current rates.
+Note that all functions converting to or from fiat return a `Promise`. This is because they call live BTC/fiat rate APIs.
+
+Fiat rate lookup uses fallback providers in this order: Coinbase, BitPay, Blockchain.com, then CoinGecko. Rates are cached for 60 seconds, and the last cached rate (up to 10 minutes old) is used when all live providers fail.
+
+Raw fiat rates are normalized to canonical numeric strings for precision. If you need display formatting (currency symbols, grouping, fixed decimals), format the result in your application layer.
+
+Conversion math uses native JavaScript number arithmetic. This keeps the package lightweight and dependency-free, but tiny floating-point artifacts can occur in edge cases.
 
 ### Bitcoin to Fiat
 
@@ -57,8 +63,8 @@ bitcoinToFiat(amountInBtc: number | string, convertTo: SupportedCurrencies): Pro
 ```typescript
 import { bitcoinToFiat } from 'bitcoin-conversion';
 
-const paymentInUsd = await bitcoinToFiat('0.00005', 'USD'); // needs await since calling CoinDesk API
-const paymentInGbp = await bitcoinToFiat(0.1, 'GBP'); // needs await since calling CoinDesk API
+const paymentInUsd = await bitcoinToFiat('0.00005', 'USD'); // needs await since calling live rate APIs
+const paymentInGbp = await bitcoinToFiat(0.1, 'GBP'); // needs await since calling live rate APIs
 ```
 
 ### Bitcoin to Satoshis
@@ -111,8 +117,8 @@ satoshisToFiat(amountInSatoshis: number | string, convertTo: SupportedCurrencies
 import { satoshisToFiat } from 'bitcoin-conversion';
 
 // number or string allowed
-const paymentInUsd = await satoshisToFiat('100000000', 'USD'); // needs await since calling CoinDesk API
-const paymentInGbp = await satoshisToFiat(50000, 'GBP'); // needs await since calling CoinDesk API
+const paymentInUsd = await satoshisToFiat('100000000', 'USD'); // needs await since calling live rate APIs
+const paymentInGbp = await satoshisToFiat(50000, 'GBP'); // needs await since calling live rate APIs
 ```
 
 ### Fiat to Bitcoin
@@ -129,8 +135,8 @@ fiatToBitcoin(amountInCurrency: number | string, convertFrom: SupportedCurrencie
 import { fiatToBitcoin } from 'bitcoin-conversion';
 
 // number or string allowed
-const paymentInBtcFromUsd = await fiatToBitcoin('100000000', 'USD'); // needs await since calling CoinDesk API
-const paymentInBtcFromGbp = await fiatToBitcoin(50000, 'GBP'); // needs await since calling CoinDesk API
+const paymentInBtcFromUsd = await fiatToBitcoin('100000000', 'USD'); // needs await since calling live rate APIs
+const paymentInBtcFromGbp = await fiatToBitcoin(50000, 'GBP'); // needs await since calling live rate APIs
 ```
 
 ### Fiat to Satoshis
@@ -147,8 +153,8 @@ fiatToSatoshis(amountInCurrency: number | string, convertFrom: SupportedCurrenci
 import { fiatToSatoshis } from 'bitcoin-conversion';
 
 // number or string allowed
-const paymentInSatsFromUsd = await fiatToSatoshis('100000000', 'USD'); // needs await since calling CoinDesk API
-const paymentInSatsFromGbp = await fiatToSatoshis(50000, 'GBP'); // needs await since calling CoinDesk API
+const paymentInSatsFromUsd = await fiatToSatoshis('100000000', 'USD'); // needs await since calling live rate APIs
+const paymentInSatsFromGbp = await fiatToSatoshis(50000, 'GBP'); // needs await since calling live rate APIs
 ```
 
 ## Supported Currencies
@@ -326,4 +332,4 @@ type SupportedCurrencies =
 
 ## Acknowledgements
 
-This library wraps around the [Coindesk API](https://www.coindesk.com/coindesk-api). I think I have to say "Powered by [CoinDesk](https://www.coindesk.com/price/bitcoin)" here to use this API...so here I am.
+Fiat conversion rates are sourced from free public APIs including [Coinbase](https://docs.cdp.coinbase.com/coinbase-business/track-apis/prices), [BitPay](https://bitpay.com/api/#rest-api-resources-rates), [Blockchain.com](https://www.blockchain.com/explorer/api/exchange_rates_api), and [CoinGecko](https://docs.coingecko.com/reference/simple-price).

@@ -1,58 +1,55 @@
-import currencyJs from 'currency.js';
-import { Decimal } from 'decimal.js-light';
-
 const numSatsInBtc = 100_000_000;
 
 export const bitcoinToFiat = async (
   amountInBtc: number | string,
   convertTo: SupportedCurrencies
 ) => {
-  const btc = new Decimal(amountInBtc);
-  const rate = await getFiatBtcRate(convertTo);
-  return btc.mul(rate).toNumber();
+  const btc = parseFiniteNumber(amountInBtc, 'amountInBtc');
+  const rate = parseFiniteNumber(await getFiatBtcRate(convertTo), `BTC-${convertTo} rate`);
+  return btc * rate;
 };
 
 export const bitcoinToPepecash = async (amountInBtc: number | string) => {
-  const btc = new Decimal(amountInBtc);
-  const pepecashToBtcRate = await getPepecashBtcRate();
-  return btc.div(pepecashToBtcRate).toNumber();
+  const btc = parseFiniteNumber(amountInBtc, 'amountInBtc');
+  const pepecashToBtcRate = parseFiniteNumber(await getPepecashBtcRate(), 'PEPECASH/BTC rate');
+  return safeDivide(btc, pepecashToBtcRate, 'bitcoinToPepecash');
 };
 
 export const bitcoinToSatoshis = (amountInBtc: number | string) => {
-  const btc = new Decimal(amountInBtc);
-  return btc.mul(numSatsInBtc).toNumber();
+  const btc = parseFiniteNumber(amountInBtc, 'amountInBtc');
+  return btc * numSatsInBtc;
 };
 
 export const bitcoinToXcp = async (amountInBtc: number | string) => {
-  const btc = new Decimal(amountInBtc);
-  const xcpToBtcRate = await getXcpBtcRate();
-  return btc.div(xcpToBtcRate).toNumber();
+  const btc = parseFiniteNumber(amountInBtc, 'amountInBtc');
+  const xcpToBtcRate = parseFiniteNumber(await getXcpBtcRate(), 'XCP/BTC rate');
+  return safeDivide(btc, xcpToBtcRate, 'bitcoinToXcp');
 };
 
 export const cryptoToBitcoin = async (
   amountInCrypto: number | string,
   cryptoCode: SupportedCypto
 ) => {
-  const amount = new Decimal(amountInCrypto);
-  const btcRate = await getCryptoBtcRate(cryptoCode);
-  return amount.times(btcRate).toNumber();
+  const amount = parseFiniteNumber(amountInCrypto, 'amountInCrypto');
+  const btcRate = parseFiniteNumber(await getCryptoBtcRate(cryptoCode), `${cryptoCode}/BTC rate`);
+  return amount * btcRate;
 };
 
 export const pepecashToBitcoin = async (amountInPepecash: number | string) => {
-  const pepecash = new Decimal(amountInPepecash);
-  const pepecashToBtcRate = await getPepecashBtcRate();
-  return pepecash.mul(pepecashToBtcRate).toNumber();
+  const pepecash = parseFiniteNumber(amountInPepecash, 'amountInPepecash');
+  const pepecashToBtcRate = parseFiniteNumber(await getPepecashBtcRate(), 'PEPECASH/BTC rate');
+  return pepecash * pepecashToBtcRate;
 };
 
 export const xcpToBitcoin = async (amountInXcp: number | string) => {
-  const xcp = new Decimal(amountInXcp);
-  const xcpToBtcRate = await getXcpBtcRate();
-  return xcp.mul(xcpToBtcRate).toNumber();
+  const xcp = parseFiniteNumber(amountInXcp, 'amountInXcp');
+  const xcpToBtcRate = parseFiniteNumber(await getXcpBtcRate(), 'XCP/BTC rate');
+  return xcp * xcpToBtcRate;
 };
 
 export const satoshisToBitcoin = (amountInSatoshis: number | string) => {
-  const sats = new Decimal(amountInSatoshis);
-  return sats.div(numSatsInBtc).toNumber();
+  const sats = parseFiniteNumber(amountInSatoshis, 'amountInSatoshis');
+  return safeDivide(sats, numSatsInBtc, 'satoshisToBitcoin');
 };
 
 export const satoshisToFiat = async (
@@ -68,10 +65,9 @@ export const fiatToBitcoin = async (
   amountInCurrency: number | string,
   convertFrom: SupportedCurrencies
 ) => {
-  const amt = new Decimal(amountInCurrency);
-  const rate = await getFiatBtcRate(convertFrom);
-  const evaluatedRate = new Decimal(rate);
-  return amt.div(evaluatedRate).toNumber();
+  const amount = parseFiniteNumber(amountInCurrency, 'amountInCurrency');
+  const rate = parseFiniteNumber(await getFiatBtcRate(convertFrom), `BTC-${convertFrom} rate`);
+  return safeDivide(amount, rate, 'fiatToBitcoin');
 };
 
 export const fiatToSatoshis = async (
@@ -120,61 +116,310 @@ export const getXcpBtcRate = async (): Promise<string> => {
   return data.estimated_value.btc;
 };
 
-// Cache interface and implementation
 interface RateCache {
   rate: string;
   timestamp: number;
+}
+
+type FiatRateProviderName = 'coinbase' | 'bitpay' | 'blockchain' | 'coingecko';
+
+interface ProviderFailure {
+  provider: FiatRateProviderName;
+  reason: string;
+}
+
+interface ProviderError extends Error {
+  cooldownMs?: number;
+}
+
+interface FiatRateProvider {
+  name: FiatRateProviderName;
+  getRate: (currency: SupportedCurrencies) => Promise<string | number>;
 }
 
 const rateCache: Record<SupportedCurrencies, RateCache | undefined> = {} as Record<
   SupportedCurrencies,
   RateCache | undefined
 >;
-const CACHE_TTL_MS = process.env.NODE_ENV === 'test' ? 0 : 60000; // 1 minute cache
+const providerCooldowns: Partial<Record<FiatRateProviderName, number>> = {};
+
+const CACHE_TTL_MS = process.env.NODE_ENV === 'test' ? 0 : 60000;
+const STALE_CACHE_TTL_MS = 10 * 60 * 1000;
+const PROVIDER_TIMEOUT_MS = 3000;
+const DEFAULT_RATE_LIMIT_COOLDOWN_MS = 60 * 1000;
 
 export const getFiatBtcRate = async (currency: SupportedCurrencies): Promise<string> => {
   const now = Date.now();
   const cachedData = rateCache[currency];
 
-  // Return cached data if it exists and hasn't expired
   if (cachedData && now - cachedData.timestamp < CACHE_TTL_MS) {
     return cachedData.rate;
   }
 
-  // Try Coinbase API first
-  try {
-    const response = await fetch(`https://api.coinbase.com/v2/prices/BTC-${currency}/spot`);
-    if (response.status === 200) {
-      const data = await response.json();
-      const rate = currencyJs(data.data.amount, { separator: '', symbol: '' }).format();
+  const failures: ProviderFailure[] = [];
 
-      // Cache the new rate
-      rateCache[currency] = { rate, timestamp: now };
-      return rate;
+  for (const provider of fiatRateProviders) {
+    const cooldownUntil = providerCooldowns[provider.name];
+
+    if (cooldownUntil && cooldownUntil > Date.now()) {
+      failures.push({
+        provider: provider.name,
+        reason: `cooldown until ${new Date(cooldownUntil).toISOString()}`,
+      });
+      continue;
     }
-  } catch (error) {
-    console.warn('Coinbase API failed, falling back to Coindesk:', error);
+
+    try {
+      const rawRate = await provider.getRate(currency);
+      const rate = normalizeRate(rawRate);
+      rateCache[currency] = { rate, timestamp: Date.now() };
+      return rate;
+    } catch (error) {
+      const providerError = toProviderError(error, provider.name);
+      failures.push({ provider: provider.name, reason: providerError.message });
+      if (providerError.cooldownMs) {
+        providerCooldowns[provider.name] = Date.now() + providerError.cooldownMs;
+      }
+    }
   }
 
-  // Fallback to Coindesk API
-  try {
-    const response = await fetch(
-      `https://api.coindesk.com/v1/bpi/currentprice/${currency.toLowerCase()}.json`
-    );
-    if (response.status === 200) {
-      const data = await response.json();
-      const rate = currencyJs(data.bpi[currency].rate, { separator: '', symbol: '' }).format();
+  if (cachedData && Date.now() - cachedData.timestamp <= STALE_CACHE_TTL_MS) {
+    return cachedData.rate;
+  }
 
-      // Cache the new rate
-      rateCache[currency] = { rate, timestamp: now };
-      return rate;
-    }
-    const json = await response.json();
-    throw Error(json);
-  } catch (error) {
-    throw new Error(`Both Coinbase and Coindesk APIs failed: ${error}`);
+  throw new Error(`Failed to fetch BTC-${currency} rate from all providers. ${describeFailures(failures)}`);
+};
+
+const getCoinbaseFiatBtcRate = async (currency: SupportedCurrencies): Promise<string | number> => {
+  const { response, data } = await fetchJsonWithTimeout(
+    `https://api.coinbase.com/v2/prices/BTC-${currency}/spot`
+  );
+
+  ensureHttpSuccess('coinbase', response.status, response.headers.get('retry-after'), data);
+
+  const amount = getNestedValue('coinbase', data, ['data', 'amount']);
+  return asRateValue('coinbase', amount, currency);
+};
+
+const getBitpayFiatBtcRate = async (currency: SupportedCurrencies): Promise<string | number> => {
+  const { response, data } = await fetchJsonWithTimeout(`https://bitpay.com/rates/BTC/${currency}`);
+
+  ensureHttpSuccess('bitpay', response.status, response.headers.get('retry-after'), data);
+
+  const rate = getNestedValue('bitpay', data, ['data', 'rate']);
+  return asRateValue('bitpay', rate, currency);
+};
+
+const getBlockchainFiatBtcRate = async (currency: SupportedCurrencies): Promise<string | number> => {
+  const { response, data } = await fetchJsonWithTimeout('https://blockchain.info/ticker');
+
+  ensureHttpSuccess('blockchain', response.status, response.headers.get('retry-after'), data);
+
+  const currencyData = getNestedValue('blockchain', data, [currency]);
+  const rate = getNestedValue('blockchain', currencyData, ['last']);
+  return asRateValue('blockchain', rate, currency);
+};
+
+const getCoingeckoFiatBtcRate = async (currency: SupportedCurrencies): Promise<string | number> => {
+  const lowerCurrency = currency.toLowerCase();
+  const { response, data } = await fetchJsonWithTimeout(
+    `https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=${lowerCurrency}`
+  );
+
+  ensureHttpSuccess('coingecko', response.status, response.headers.get('retry-after'), data);
+
+  const bitcoin = getNestedValue('coingecko', data, ['bitcoin']);
+  const rate = getNestedValue('coingecko', bitcoin, [lowerCurrency]);
+  return asRateValue('coingecko', rate, currency);
+};
+
+const fetchJsonWithTimeout = async (url: string) => {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), PROVIDER_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(url, { signal: controller.signal });
+    const data = await safeJson(response);
+    return { response, data };
+  } finally {
+    clearTimeout(timeout);
   }
 };
+
+const safeJson = async (response: Response): Promise<unknown> => {
+  try {
+    return await response.json();
+  } catch {
+    return null;
+  }
+};
+
+const ensureHttpSuccess = (
+  provider: FiatRateProviderName,
+  status: number,
+  retryAfterHeader: string | null,
+  data: unknown
+) => {
+  if (status === 200) {
+    return;
+  }
+
+  const summary = data === null ? 'no response body' : stringifyJson(data);
+  const cooldownMs =
+    status === 429
+      ? parseRetryAfterMs(retryAfterHeader) ?? DEFAULT_RATE_LIMIT_COOLDOWN_MS
+      : undefined;
+  throw buildProviderError(provider, `HTTP ${status}: ${summary}`, cooldownMs);
+};
+
+const getNestedValue = (
+  provider: FiatRateProviderName,
+  value: unknown,
+  path: string[]
+): unknown => {
+  let current: unknown = value;
+
+  for (const key of path) {
+    if (!isRecord(current) || !(key in current)) {
+      throw buildProviderError(provider, `missing field "${path.join('.')}"`);
+    }
+    current = current[key];
+  }
+
+  return current;
+};
+
+const asRateValue = (
+  provider: FiatRateProviderName,
+  value: unknown,
+  currency: SupportedCurrencies
+): string | number => {
+  if (typeof value === 'number' || typeof value === 'string') {
+    return value;
+  }
+
+  throw buildProviderError(provider, `invalid rate type for ${currency}`);
+};
+
+const normalizeRate = (rate: string | number): string => {
+  const parsedRate = parseFiniteNumber(rate, 'provider rate', { allowCommas: true });
+  return String(parsedRate);
+};
+
+const parseFiniteNumber = (
+  value: number | string,
+  context: string,
+  options: { allowCommas?: boolean } = {}
+): number => {
+  if (typeof value === 'number') {
+    if (!Number.isFinite(value)) {
+      throw new Error(`invalid numeric input for ${context}: ${value}`);
+    }
+    return value;
+  }
+
+  const trimmed = value.trim();
+  if (trimmed === '') {
+    throw new Error(`invalid numeric input for ${context}: empty string`);
+  }
+
+  const normalized = options.allowCommas ? trimmed.replace(/,/g, '') : trimmed;
+  const parsed = Number(normalized);
+
+  if (!Number.isFinite(parsed)) {
+    throw new Error(`invalid numeric input for ${context}: ${value}`);
+  }
+
+  return parsed;
+};
+
+const safeDivide = (numerator: number, denominator: number, context: string): number => {
+  if (!Number.isFinite(denominator) || denominator === 0) {
+    throw new Error(`division by zero for ${context}`);
+  }
+
+  return numerator / denominator;
+};
+
+const parseRetryAfterMs = (retryAfterHeader: string | null): number | undefined => {
+  if (!retryAfterHeader) {
+    return undefined;
+  }
+
+  const seconds = Number(retryAfterHeader);
+  if (!Number.isNaN(seconds) && Number.isFinite(seconds) && seconds > 0) {
+    return seconds * 1000;
+  }
+
+  const dateInMs = Date.parse(retryAfterHeader);
+  if (Number.isNaN(dateInMs)) {
+    return undefined;
+  }
+
+  const diff = dateInMs - Date.now();
+  return diff > 0 ? diff : undefined;
+};
+
+const describeFailures = (failures: ProviderFailure[]): string => {
+  if (failures.length === 0) {
+    return 'No providers were attempted.';
+  }
+
+  return failures.map((failure) => `${failure.provider}: ${failure.reason}`).join('; ');
+};
+
+const stringifyJson = (value: unknown): string => {
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> => {
+  return typeof value === 'object' && value !== null;
+};
+
+const buildProviderError = (
+  provider: FiatRateProviderName,
+  message: string,
+  cooldownMs?: number
+): ProviderError => {
+  const error = new Error(`[${provider}] ${message}`) as ProviderError;
+  if (cooldownMs) {
+    error.cooldownMs = cooldownMs;
+  }
+  return error;
+};
+
+const toProviderError = (error: unknown, provider: FiatRateProviderName): ProviderError => {
+  if (isAbortError(error)) {
+    return buildProviderError(provider, `timeout after ${PROVIDER_TIMEOUT_MS}ms`);
+  }
+
+  if (typeof error === 'object' && error !== null && 'message' in error) {
+    const providerError = error as ProviderError;
+    return providerError;
+  }
+
+  return buildProviderError(provider, String(error));
+};
+
+const isAbortError = (error: unknown): boolean => {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'name' in error &&
+    (error as { name: string }).name === 'AbortError'
+  );
+};
+
+const fiatRateProviders: FiatRateProvider[] = [
+  { name: 'coinbase', getRate: getCoinbaseFiatBtcRate },
+  { name: 'bitpay', getRate: getBitpayFiatBtcRate },
+  { name: 'blockchain', getRate: getBlockchainFiatBtcRate },
+  { name: 'coingecko', getRate: getCoingeckoFiatBtcRate },
+];
 
 export type SupportedCypto = 'ETH';
 
